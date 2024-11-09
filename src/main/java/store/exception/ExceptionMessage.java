@@ -9,7 +9,11 @@ public enum ExceptionMessage {
     INVALID_MEMBERSHIP_INPUT("멤버십 할인 여부는 Y/N으로 입력해야 합니다."),
     INVALID_ADDITIONAL_PURCHASE_INPUT("추가 구매 여부는 Y/N으로 입력해야 합니다."),
     INVALID_ADDITIONAL_PRODUCT_FORMAT("추가 구매할 상품과 수량 형식이 올바르지 않습니다."),
-    INVALID_CONFIRMATION_INPUT("안내 문구는 Y/N으로 입력해야 합니다.");
+    INVALID_CONFIRMATION_INPUT("안내 문구는 Y/N으로 입력해야 합니다."),
+    FILE_READ_ERROR("파일을 읽는 중 오류가 발생했습니다: %s"),
+    PROMOTION_PARSING_ERROR("프로모션 정보를 파싱하는 중 오류가 발생했습니다: %s"),
+    INVALID_QUANTITY("수량은 0 이상이어야 합니다."),
+    INSUFFICIENT_STOCK("재고 수량을 초과하여 구매할 수 없습니다. 다시 입력해 주세요."),;
 
     public static final String BASE_MESSAGE = "[ERROR] %s";
     private final String message;
