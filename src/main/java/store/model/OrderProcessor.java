@@ -40,8 +40,6 @@ public class OrderProcessor {
         Product product = findAndValidatePromotionOrNormalProduct(productName);
         if (product != null) {
             productPrices.put(product.getName(), product.getPrice());
-        } else {
-            System.out.println(ExceptionMessage.NON_EXISTENT_PRODUCT.format());
         }
         return product;
     }
