@@ -22,14 +22,22 @@ public class Employee {
     }
 
     public OrderDto processOrder() {
-        String productSelection = inputView.requestValidProductSelection();
-        String[] items = productSelection.split(",");
-        OrderComponents orderComponents = initializeOrderComponents();
-        OrderTotals orderTotals = processOrderItems(items, orderComponents.orderedProducts(), orderComponents.bonusProducts(), orderComponents.productPrices());
-        double totalMembershipDiscount = requestAndApplyMembershipDiscount(orderTotals.totalOrderPrice(), orderTotals.totalPromotionDiscount());
+        while (true) {
+            try {
+                String productSelection = inputView.requestValidProductSelection();
+                String[] items = productSelection.split(",");
+                OrderComponents orderComponents = initializeOrderComponents();
+                OrderTotals orderTotals = processOrderItems(items, orderComponents.orderedProducts(), orderComponents.bonusProducts(), orderComponents.productPrices());
+                double totalMembershipDiscount = requestAndApplyMembershipDiscount(orderTotals.totalOrderPrice(), orderTotals.totalPromotionDiscount());
 
-        return new OrderDto(orderComponents.orderedProducts(), orderComponents.productPrices(), orderTotals.totalOrderPrice(), orderTotals.totalPromotionDiscount(), totalMembershipDiscount, orderComponents.bonusProducts());
+                return new OrderDto(orderComponents.orderedProducts(), orderComponents.productPrices(), orderTotals.totalOrderPrice(), orderTotals.totalPromotionDiscount(), totalMembershipDiscount, orderComponents.bonusProducts());
+
+            } catch (IllegalArgumentException e) {
+
+            }
+        }
     }
+
 
     // 주문 구성 요소들을 초기화하는 메서드
     private OrderComponents initializeOrderComponents() {
