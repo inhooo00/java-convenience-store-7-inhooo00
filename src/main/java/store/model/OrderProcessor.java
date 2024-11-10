@@ -67,7 +67,7 @@ public class OrderProcessor {
         return product;
     }
 
-    // 프로모션 재고 처리 메서드: 부족하면 일반 재고에서 차감
+    // 프로모션 재고 처리 메서드: 부족하면 일반 재고에서 차감 로직 - 역할과 책임 분리 필요
     private OrderTotals handlePromotionProduct(Product product, LinkedHashMap<String, Integer> orderedProducts,
                                                int requestedQuantity, int inputQuantity,
                                                Map<String, Integer> bonusProducts) {
@@ -80,29 +80,19 @@ public class OrderProcessor {
 
             if (requestedQuantity > availableStock) {
                 int remainingQuantity = requestedQuantity - availableStock;
-                int quantityNotApplicableToPromotion =
-                        inputQuantity - ((product.getStock() / (buyQuantity + 1)) * (buyQuantity + 1));
-
-                Product normalProduct = inventoryManager.findPromotionProduct(product.getName(), false);
-                if (normalProduct != null && normalProduct.getStock() >= remainingQuantity) {
-                    if (inputView.confirmPurchaseWithoutPromotion(product.getName(),
-                            quantityNotApplicableToPromotion)) {
-                        normalProduct.decreaseStock(remainingQuantity);
-                        requestedQuantity = availableStock;
-                    }
-                }
+                int quantityNotApplicableToPromotion = inputQuantity - ((product.getStock() / (buyQuantity + 1)) * (buyQuantity + 1));
+                requestedQuantity = confirmAndAdjustStockForNormalProduct(product, remainingQuantity, quantityNotApplicableToPromotion, requestedQuantity);
             }
 
-            promotionDiscount +=
-                    product.getPrice() * (requestedQuantity / (product.getPromotion().getBuyQuantity() + 1));
-            bonusProducts.put(product.getName(),
-                    requestedQuantity / (product.getPromotion().getBuyQuantity() + 1));
+            promotionDiscount = calculatePromotionDiscount(product, requestedQuantity);
+            bonusProducts.put(product.getName(), requestedQuantity / (product.getPromotion().getBuyQuantity() + 1));
         } else {
             bonusProducts.put(product.getName(), 0);
         }
 
         orderPrice += product.getPrice() * inputQuantity;
         orderedProducts.put(product.getName(), inputQuantity);
+
         try {
             product.decreaseStock(requestedQuantity, inventoryManager.findPromotionProduct(product.getName(), false));
         } catch (IllegalArgumentException e) {
@@ -112,4 +102,22 @@ public class OrderProcessor {
         }
         return new OrderTotals(orderPrice, promotionDiscount);
     }
+
+    // 일반 상품 재고를 확인하고 부족분을 처리하는 메서드
+    private int confirmAndAdjustStockForNormalProduct(Product product, int remainingQuantity, int quantityNotApplicableToPromotion, int requestedQuantity) {
+        Product normalProduct = inventoryManager.findPromotionProduct(product.getName(), false);
+        if (normalProduct != null && normalProduct.getStock() >= remainingQuantity) {
+            if (inputView.confirmPurchaseWithoutPromotion(product.getName(), quantityNotApplicableToPromotion)) {
+                normalProduct.decreaseStock(remainingQuantity);
+                requestedQuantity = product.getStock(); // 프로모션 재고의 최대치로 설정
+            }
+        }
+        return requestedQuantity;
+    }
+
+    // 프로모션 할인 계산 메서드
+    private double calculatePromotionDiscount(Product product, int requestedQuantity) {
+        return product.getPrice() * (requestedQuantity / (product.getPromotion().getBuyQuantity() + 1));
+    }
+
 }
