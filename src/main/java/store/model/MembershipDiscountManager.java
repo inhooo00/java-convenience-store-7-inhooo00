@@ -6,7 +6,7 @@ public class MembershipDiscountManager {
     private static final int MAX_DISCOUNT = 8000;
 
     public double calculateDiscount(double amount) {
-        double discount = Math.floor(amount * DISCOUNT_RATE / 1000) * 1000;
+        double discount = amount * DISCOUNT_RATE;
         return Math.min(discount, MAX_DISCOUNT);
     }
 
@@ -14,8 +14,7 @@ public class MembershipDiscountManager {
         return amount > 0;
     }
 
-    public double applyMembershipDiscount(double totalOrderPrice, double totalPromotionDiscount, boolean applyDiscount) {
-        double applicableAmount = totalOrderPrice - totalPromotionDiscount;
-        return applyDiscount && canApplyDiscount(applicableAmount) ? calculateDiscount(applicableAmount) : 0;
+    public double applyMembershipDiscount(double nonPromotionTotal, boolean applyDiscount) {
+        return applyDiscount && canApplyDiscount(nonPromotionTotal) ? calculateDiscount(nonPromotionTotal) : 0;
     }
 }

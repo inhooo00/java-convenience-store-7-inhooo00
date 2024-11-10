@@ -28,16 +28,25 @@ public class Employee {
                 String[] items = productSelection.split(",");
                 OrderComponents orderComponents = initializeOrderComponents();
                 OrderTotals orderTotals = processOrderItems(items, orderComponents.orderedProducts(), orderComponents.bonusProducts(), orderComponents.productPrices());
-                double totalMembershipDiscount = requestAndApplyMembershipDiscount(orderTotals.totalOrderPrice(), orderTotals.totalPromotionDiscount());
 
-                return new OrderDto(orderComponents.orderedProducts(), orderComponents.productPrices(), orderTotals.totalOrderPrice(), orderTotals.totalPromotionDiscount(), totalMembershipDiscount, orderComponents.bonusProducts());
+                // 일반 상품의 총 금액을 계산하여 멤버십 할인 적용
+                double nonPromotionTotal = orderTotals.nonPromotionTotal();
+                double totalMembershipDiscount = requestAndApplyMembershipDiscount(nonPromotionTotal);
+
+                return new OrderDto(
+                        orderComponents.orderedProducts(),
+                        orderComponents.productPrices(),
+                        orderTotals.totalOrderPrice(),
+                        orderTotals.totalPromotionDiscount(),
+                        totalMembershipDiscount,
+                        orderComponents.bonusProducts()
+                );
 
             } catch (IllegalArgumentException e) {
-
+                System.out.println(e.getMessage()); // 예외 메시지 출력 후 다시 입력 요청
             }
         }
     }
-
 
     // 주문 구성 요소들을 초기화하는 메서드
     private OrderComponents initializeOrderComponents() {
@@ -48,21 +57,26 @@ public class Employee {
         return new OrderComponents(orderedProducts, productPrices, bonusProducts);
     }
 
-
     private OrderTotals processOrderItems(String[] items, LinkedHashMap<String, Integer> orderedProducts, Map<String, Integer> bonusProducts, Map<String, Integer> productPrices) {
         double totalOrderPrice = 0;
         double totalPromotionDiscount = 0;
+        double nonPromotionTotal = 0;
+
         for (String item : items) {
             OrderTotals totals = orderProcessor.processOrderItem(item, orderedProducts, bonusProducts, productPrices);
             totalOrderPrice += totals.totalOrderPrice();
             totalPromotionDiscount += totals.totalPromotionDiscount();
+
+            // 프로모션이 없는 상품의 금액을 nonPromotionTotal에 추가
+            if (totals.totalPromotionDiscount() == 0) {
+                nonPromotionTotal += totals.totalOrderPrice();
+            }
         }
-        return new OrderTotals(totalOrderPrice, totalPromotionDiscount);
+        return new OrderTotals(totalOrderPrice, totalPromotionDiscount, nonPromotionTotal);
     }
 
-    private double requestAndApplyMembershipDiscount(double totalOrderPrice, double totalPromotionDiscount) {
+    private double requestAndApplyMembershipDiscount(double nonPromotionTotal) {
         boolean applyDiscount = inputView.requestMembershipDiscount();
-
-        return membershipDiscountManager.applyMembershipDiscount(totalOrderPrice, totalPromotionDiscount, applyDiscount);
+        return membershipDiscountManager.applyMembershipDiscount(nonPromotionTotal, applyDiscount);
     }
 }

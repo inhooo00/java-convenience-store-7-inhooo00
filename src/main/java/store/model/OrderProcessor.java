@@ -21,7 +21,7 @@ public class OrderProcessor {
     // 개별 주문 항목 처리 메서드
     public OrderTotals processOrderItem(String item, LinkedHashMap<String, Integer> orderedProducts,
                                         Map<String, Integer> bonusProducts, Map<String, Integer> productPrices) {
-        String[] productData = item.replace("[", "").replace("]", "").split("-");
+        String[] productData = item.replace("[", "").replace("]", "").split("-",-1);
         String productName = productData[0];
         int requestedQuantity = Integer.parseInt(productData[1]);
 
@@ -33,7 +33,6 @@ public class OrderProcessor {
         QuantityUpdateDto quantities = bonusProduct.handleBonusProductAddition(product, requestedQuantity, orderedProducts);
         return applyPromotionDiscounts(product, orderedProducts, quantities, bonusProducts);
     }
-
 
     // 상품 찾기와 검증을 포함하여 상품의 가격을 설정하는 메서드
     private Product findAndValidateProduct(String productName, Map<String, Integer> productPrices) {
@@ -71,6 +70,7 @@ public class OrderProcessor {
                                                Map<String, Integer> bonusProducts) {
         double orderPrice = 0;
         double promotionDiscount = 0;
+        double nonPromotionTotal = 0;
         int availableStock = product.getStock();
 
         if (product.getPromotion() != null && product.getPromotion().isActive()) {
@@ -85,6 +85,7 @@ public class OrderProcessor {
             promotionDiscount = calculatePromotionDiscount(product, requestedQuantity);
             bonusProducts.put(product.getName(), requestedQuantity / (product.getPromotion().getBuyQuantity() + 1));
         } else {
+            nonPromotionTotal += product.getPrice() * inputQuantity;
             bonusProducts.put(product.getName(), 0);
         }
 
@@ -96,9 +97,9 @@ public class OrderProcessor {
         } catch (IllegalArgumentException e) {
             System.out.println(e.getMessage());
             inputView.requestValidProductSelection(); // 재입력 요청
-            return new OrderTotals(0, 0); // 에러 발생으로 인한 주문 취소
+            return new OrderTotals(0, 0, 0); // 에러 발생으로 인한 주문 취소
         }
-        return new OrderTotals(orderPrice, promotionDiscount);
+        return new OrderTotals(orderPrice, promotionDiscount, nonPromotionTotal);
     }
 
     // 일반 상품 재고를 확인하고 부족분을 처리하는 메서드
@@ -117,5 +118,4 @@ public class OrderProcessor {
     private double calculatePromotionDiscount(Product product, int requestedQuantity) {
         return product.getPrice() * (requestedQuantity / (product.getPromotion().getBuyQuantity() + 1));
     }
-
 }
